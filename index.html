@@ -228,7 +228,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 g.querySelectorAll('[data-gd]').forEach(function(b){b.onclick=function(){sel(b.dataset.gd)}});sel(/iPhone|iPad|iPod/.test(navigator.userAgent)?'iphone':'samsung');})();</script></div>
 </details>
 
-<p class="tiny">Indscanner v1.9 · Salomonsen Electric</p>
+<p class="tiny">Indscanner v1.10 · Salomonsen Electric</p>
 </main>
 
 <div id="qrmodal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px">
@@ -544,11 +544,12 @@ $('send').onclick=function(){
     installeret_af:FIRMA,indkobt_af:FIRMA,udedele:d.udedele,indedele:d.indedele};
   if(photo&&ekReady()&&ekDone!==ekKey())ekUpload();
   var txt=JSON.stringify(payload);
-  var okMsg='📋 Oplysningerne er kopieret. På Panasonic-siden: tryk på bogmærket <b>Panasonic udfyld</b> (to gange, hvis siden skifter).';
+  var okMsg='📋 Oplysningerne er kopieret. På Panasonic-siden: tryk på bogmærket <b>Panasonic udfyld</b> Når du kommer tilbage hertil, er felterne ryddet til næste scanning.';
+  var markSent=function(){lastPhoto=photo;lastPhotoDate=photoDate;lastPreview=$('preview').src;store(SENTKEY,{at:Date.now(),data:getData(),ekDone:ekDone===ekKey()?ekDone:null})};
   var copied=false;try{copied=legacyCopy(txt)}catch(e){}
-  if(copied){status(okMsg,'ok');if(!window.open(PANASONIC_URL,'_blank'))status(okMsg+'<br><a href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic</a>','ok');return}
+  if(copied){markSent();status(okMsg,'ok');if(!window.open(PANASONIC_URL,'_blank'))status(okMsg+'<br><a href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic</a>','ok');return}
   (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){
-    status(okMsg+'<br><a class="btn green" style="margin-top:8px" href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic ➜</a>','ok');
+    markSent();status(okMsg+'<br><a class="btn green" style="margin-top:8px" href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic ➜</a>','ok');
   }).catch(function(){status('Kunne ikke kopiere automatisk. Prøv igen.','err')});
 };
 
@@ -633,14 +634,14 @@ function ekUpload(){
   if(!photo){ekStatus('Tag først et billede.','warn');return}
   if(!ekReady()){ekStatus('E-komplet er ikke sat op endnu. Udfyld API-nøgle og sitename under ⚙️ Indstillinger.','warn');$('setup').open=true;return}
   var ref=$('ordre').value.trim();if(!ref){ekStatus('Skriv sagsnummeret øverst, så uploades billedet.','warn');$('ordre').focus();return}
-  var key=ekKey();ekBusy=true;$('ekbtn').disabled=true;
+  var key=ekKey(),ph=photo,fname=photoName();ekBusy=true;$('ekbtn').disabled=true;
   ekStatus('<span class="spin" style="border-color:rgba(11,74,128,.25);border-top-color:#0b4a80;vertical-align:-3px;margin-right:6px"></span>Uploader billedet til sag '+ref+' i E-komplet…','info');
   var proj;
   ekFindProject(ref).then(function(list){
     proj=list[0];
-    return shrinkForUpload(photo);
+    return shrinkForUpload(ph);
   }).then(function(f){return blobToB64(f.blob).then(function(b64){return{b64:b64,type:f.type}})}).then(function(f){
-    var ext=f.type==='image/png'?'.png':(/hei[cf]/.test(f.type)?'.heic':'.jpg');var body=[{fileName:photoName().replace(/\.jpg$/,ext),mimeType:f.type,description:'Panasonic opstartsprotokol / garantiregistrering',fileData:f.b64}];
+    var ext=f.type==='image/png'?'.png':(/hei[cf]/.test(f.type)?'.heic':'.jpg');var body=[{fileName:fname.replace(/\.jpg$/,ext),mimeType:f.type,description:'Panasonic opstartsprotokol / garantiregistrering',fileData:f.b64}];
     return ekFetch('projects/upload?projectId='+encodeURIComponent(pick(proj,'projectID')),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   }).then(function(){
     ekDone=key;var nm=pick(proj,'projectName')||'';var cu=pick(proj,'customerName')||'';
@@ -675,11 +676,35 @@ $('save').onclick=function(){
 };
 
 $('resetTop').onclick=function(){$('reset').click()};
-$('reset').onclick=function(){
-  if(!confirm('Ryd alle felter og start en ny scanning?'))return;
+function clearAll(){
   photo=null;photoDate=null;$('preview').classList.add('hidden');$('status').classList.add('hidden');$('retry').classList.add('hidden');
   $('datohint').textContent='';$('ekstatus').classList.add('hidden');ekDone=null;ekCustP=null;ekCustRef='';$('ordreinfo').textContent='';setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
+}
+$('reset').onclick=function(){
+  if(!confirm('Ryd alle felter og start en ny scanning?'))return;
+  clearAll();try{localStorage.removeItem(SENTKEY)}catch(e){}
 };
+
+// ---------- auto-clear after send ----------
+var SENTKEY='saelIndscanSent', lastPhoto=null, lastPhotoDate=null, lastPreview='';
+function autoClearCheck(){
+  var m=store(SENTKEY);if(!m||!m.at)return;
+  if(Date.now()-m.at<2500)return;
+  try{localStorage.removeItem(SENTKEY)}catch(e){}
+  clearAll();
+  status('✅ Den forrige registrering (sag <b>'+(m.data&&m.data.ordre||'–')+'</b>) er sendt videre, og felterne er ryddet. Klar til næste scanning.<br><button type="button" class="btn grey" id="undoClear" style="margin-top:8px">↩ Fortryd og hent oplysningerne igen</button>','ok');
+  $('undoClear').onclick=function(){
+    setData(m.data);saveData();
+    if(lastPhoto){photo=lastPhoto;photoDate=lastPhotoDate;$('preview').src=lastPreview||URL.createObjectURL(lastPhoto);$('preview').classList.remove('hidden')}
+    if(m.ekDone)ekDone=m.ekDone;
+    if($('ordre').value.trim())ekShowOrdre();
+    status('Oplysningerne er hentet igen'+(lastPhoto?'':' (billedet kan ikke hentes igen, efter appen har været lukket)')+'.','info');
+  };
+}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')autoClearCheck()});
+window.addEventListener('pageshow',autoClearCheck);
+window.addEventListener('focus',autoClearCheck);
+autoClearCheck();
 
 // ---------- setup QR ----------
 if(setupMsg==='ok'){status('✅ Opsætningen er gemt på denne telefon (AI-nøgle og E-komplet). Næste trin: læg appen på hjemmeskærmen. Følg vejledningen nedenfor.','ok');$('homeguide').open=true;setTimeout(function(){$('homeguide').scrollIntoView({behavior:'smooth'})},400)}
