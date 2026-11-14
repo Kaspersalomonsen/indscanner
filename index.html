@@ -63,7 +63,8 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
   <h2>1 · Ordre</h2>
   <label class="f" for="ordre">Sags-/ordrenummer (E-komplet)</label>
   <input type="text" id="ordre" inputmode="text" autocomplete="off" placeholder="fx 24117">
-  <p class="hint">Ordrenummeret kommer også i feltet "Installationsreference" hos Panasonic og i billedets filnavn.</p>
+  <p class="hint" id="ordreinfo"></p>
+  <p class="hint">Kundens navn, telefon, e-mail og adresse hentes fra sagen i E-komplet. Nummeret bruges også i billedets filnavn.</p>
 </section>
 
 <section class="card">
@@ -226,7 +227,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 g.querySelectorAll('[data-gd]').forEach(function(b){b.onclick=function(){sel(b.dataset.gd)}});sel(/iPhone|iPad|iPod/.test(navigator.userAgent)?'iphone':'samsung');})();</script></div>
 </details>
 
-<p class="tiny">Indscanner v1.5 · Salomonsen Electric</p>
+<p class="tiny">Indscanner v1.8 · Salomonsen Electric</p>
 </main>
 
 <div id="qrmodal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px">
@@ -242,14 +243,27 @@ g.querySelectorAll('[data-gd]').forEach(function(b){b.onclick=function(){sel(b.d
 <script type="text/plain" id="bmsrc">(async()=>{
 const K='saelIndscan',U='https://www.panasonicproclub.com/DK_da/service/commissioning-submit/new/';
 const msg=(t,c)=>{let b=document.getElementById('saelMsg');if(!b){b=document.createElement('div');b.id='saelMsg';b.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:99999;padding:14px 16px;border-radius:10px;font:16px/1.45 sans-serif;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.35);cursor:pointer';document.body.appendChild(b);b.onclick=()=>b.remove();}b.style.background=c||'#1565c0';b.innerHTML=t;};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
 if(location.href.indexOf('/commissioning-submit/new')<0){location.href=U;return;}
 let raw=sessionStorage.getItem(K);
 if(!raw){try{raw=await navigator.clipboard.readText();}catch(e){raw=prompt('Indsæt data fra Indscanner her:')||'';}}
 let d;try{d=JSON.parse(raw);if(d.app!=='sael-indscanner')throw 0;}catch(e){msg('Ingen scanning fundet. Tryk først på <b>Send til Panasonic</b> i Indscanner-appen, og tryk så på bogmærket igen.','#c62828');return;}
 sessionStorage.setItem(K,JSON.stringify(d));
-const f=[...document.forms].find(x=>x.querySelector('[name^=frm_product_range]'));
+let f=[...document.forms].find(x=>x.querySelector('[name^=frm_product_range]'));
 if(!f){msg('Kunne ikke finde garantiformularen på siden. Er du logget ind?','#c62828');return;}
-if(!f.querySelector('[name=frm_we_customer_name]')){const s=f.querySelector('[name=frm_product_range]');s.value=d.produktvalg||'1';msg('Vælger produkttype… <b>Tryk på bogmærket igen</b>, når siden er indlæst.');f.querySelector('[name=next]').click();return;}
+if(!f.querySelector('[name=frm_we_customer_name]')){
+  msg('Henter formularen…');
+  const s=f.querySelector('[name=frm_product_range]');s.value=d.produktvalg||'1';
+  try{
+    const fd=new FormData(f);const nb=f.querySelector('[name=next]');if(nb&&nb.name)fd.set(nb.name,nb.value||'');
+    const r=await fetch(f.action||location.href,{method:'POST',body:fd,credentials:'include'});const html=await r.text();
+    if(!r.ok||html.indexOf('frm_we_customer_name')<0)throw 0;
+    document.open();document.write(html);document.close();
+    for(let i=0;i<60;i++){await wait(200);f=[...document.forms].find(x=>x.querySelector('[name=frm_we_customer_name]'));if(f&&window.jQuery&&document.readyState==='complete')break;}
+    await wait(400);
+    if(!f)throw 0;
+  }catch(e){msg('Vælger produkttype… <b>Tryk på bogmærket igen</b>, når siden er indlæst.');f.querySelector('[name=next]').click();return;}
+}
 const $=window.jQuery,miss=[];
 const q=n=>[...f.querySelectorAll('[name="'+n+'"]')];
 const S=(n,v,i)=>{const e=q(n)[i||0];if(!e||v==null||v==='')return;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
@@ -260,7 +274,7 @@ S('frm_installation_reference',d.reference);S('frm_address_installation',d.adres
 const de=q('frm_data_installation')[0];if(de&&d.dato){de.value=d.dato;if($&&$.fn.datepicker){try{$(de).attr('data-date',d.dato).datepicker('setValue',d.dato);}catch(e){}}de.value=d.dato;}
 M(q('frm_distribuidor')[0],d.grossist,true);
 S('frm_dk_purchased_by',d.indkobt_af);S('frm_dk_installed_by',d.installeret_af);
-const units=async(kind,list,btn)=>{for(let i=0;i<list.length;i++){let sel=q('frm_'+kind+'_unit_product_ref[]');if(i>=sel.length){const b=[...f.querySelectorAll('button,a,input[type=button],input[type=submit]')].find(b=>(b.innerText||b.value||'').trim().toLowerCase()===btn);if(!b)break;b.click();await new Promise(r=>setTimeout(r,500));sel=q('frm_'+kind+'_unit_product_ref[]');}M(sel[i],list[i].model);S('frm_'+kind+'_unit_serial_number[]',list[i].serie,i);}};
+const units=async(kind,list,btn)=>{for(let i=0;i<list.length;i++){let sel=q('frm_'+kind+'_unit_product_ref[]');if(i>=sel.length){const b=[...f.querySelectorAll('button,a,input[type=button],input[type=submit]')].find(b=>(b.innerText||b.value||'').trim().toLowerCase()===btn);if(!b)break;b.click();await wait(500);sel=q('frm_'+kind+'_unit_product_ref[]');}M(sel[i],list[i].model);S('frm_'+kind+'_unit_serial_number[]',list[i].serie,i);}};
 await units('outdoors',d.udedele||[],'tilføj udendørs');await units('indoors',d.indedele||[],'tilføj indendørs');
 sessionStorage.removeItem(K);
 const cb=document.getElementById('frm_check_obligatorio');if(cb)cb.scrollIntoView({block:'center'});
@@ -275,7 +289,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 'use strict';
 var PANASONIC_URL='https://www.panasonicproclub.com/DK_da/service/commissioning-submit/new/';
 var SKEY='saelIndscanSettings', DKEY='saelIndscanData';
-var DEFAULTS={apikey:'',model:'gemini-flash-latest',ekkey:'',eksite:''};
+var DEFAULTS={apikey:'',model:'gemini-flash-lite-latest',ekkey:'',eksite:''};
 var FIRMA='Salomonsen Electric', GROSSIST='Panasonic forhandler';
 var EK_BASE='https://externalaccessapi.e-komplet.dk/api/v4/';
 var FIELDS=['fornavn','efternavn','telefon','email','adresse','postnr_by','dato'];
@@ -284,6 +298,7 @@ var photo=null, photoDate=null;
 
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
 var settings=Object.assign({},DEFAULTS,store(SKEY)||{});
+if(!settings.model||settings.model==='gemini-flash-latest')settings.model=DEFAULTS.model;
 var setupMsg='';
 (function(){
   var h=location.hash||'';if(h.indexOf('#setup=')!==0)return;
@@ -403,13 +418,23 @@ var SCHEMA={type:'OBJECT',properties:{
   indedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}}
 },required:['fornavn','efternavn','telefon','email','adresse','postnr_by','dato','udedele','indedele']};
 
-var FALLBACK_MODELS=['gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest'];
-function geminiOnce(model,b64,ms){
+var FALLBACK_MODELS=['gemini-flash-lite-latest','gemini-flash-latest','gemini-3.8-flash'];
+var PROMPT_UNITS='Billedet viser en udfyldt dansk opstartsprotokol for Panasonic luft-til-luft varmepumper. '+
+'Udtræk KUN varmepumpeoplysningerne (typeskilt-labels under "Varmepumpeoplysninger") og datoen ved "Idriftsættelsesdato" (dd-mm-åååå, tom streng hvis tom). '+
+'Udendørsenheder: model starter med "CU-" (eller WH-/U-); indendørsenheder: "CS-" (eller S-/WH-). Modellen står under første stregkode, serienummeret under anden stregkode. '+
+'Aflæs tegn for tegn; forveksl ikke 0/O, 1/I, 5/S, 8/B. Der kan være flere enheder. Svar kun med JSON.';
+var SCHEMA_UNITS={type:'OBJECT',properties:{dato:{type:'STRING'},
+  udedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}},
+  indedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}}
+},required:['dato','udedele','indedele']};
+var CUST_FIELDS=['fornavn','efternavn','telefon','email','adresse','postnr_by'];
+var ekCustP=null, ekCustRef='';
+function geminiOnce(model,b64,ms,prompt,schema){
   var ac=window.AbortController?new AbortController():null;var tm=ac?setTimeout(function(){ac.abort()},ms):null;
   return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
     method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':(settings.apikey||'').trim()},signal:ac?ac.signal:undefined,
-    body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
-      generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:SCHEMA}})
+    body:JSON.stringify({contents:[{parts:[{text:prompt||PROMPT},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
+      generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:schema||SCHEMA}})
   }).then(function(r){return r.json().then(function(j){
     if(tm)clearTimeout(tm);
     if(!r.ok){var e=new Error((j&&j.error&&j.error.message)||('HTTP '+r.status));e.status=r.status;throw e}
@@ -418,7 +443,7 @@ function geminiOnce(model,b64,ms){
     return JSON.parse(t.replace(/^```json|```$/g,''));
   })},function(err){if(tm)clearTimeout(tm);var e=new Error(err&&err.name==='AbortError'?'AI-modellen svarede ikke i tide':String(err&&err.message||err));e.status=err&&err.name==='AbortError'?504:0;throw e});
 }
-function gemini(b64){
+function gemini(b64,prompt,schema){
   var first=(settings.model||DEFAULTS.model).replace(/^models\//,'').trim();
   var list=[first].concat(FALLBACK_MODELS.filter(function(m){return m!==first}));
   var i=0,lastErr=null;
@@ -426,7 +451,7 @@ function gemini(b64){
     if(i>=list.length)return Promise.reject(lastErr||new Error('Ingen AI-model svarede'));
     var m=list[i++];
     if(i>1)status('<span class="spin"></span>Prøver en anden AI-model ('+m+')…','info');
-    return geminiOnce(m,b64,i===list.length?60000:30000).catch(function(e){
+    return geminiOnce(m,b64,i===1?20000:(i===list.length?45000:25000),prompt,schema).catch(function(e){
       lastErr=e;
       if(e.status===400&&/API key|API_KEY/i.test(e.message))throw e;
       if(e.status===401||e.status===403)throw e;
@@ -458,12 +483,19 @@ function analyse(){
     if(!$('dato').value)$('dato').value=fmtDate(photoDate);
     status('Der er ingen AI-nøgle under ⚙️ Indstillinger, så felterne skal udfyldes manuelt.','warn');$('setup').open=true;saveData();return;
   }
-  status('<span class="spin"></span>Læser protokollen… (5–15 sek.)','info');
+  status('<span class="spin"></span>Læser protokollen… (typisk 2–5 sek.)','info');
   var bmpP=loadBitmap(photo);
-  bmpP.then(function(bmp){
-    return Promise.all([gemini(toJpegBase64(bmp,2000)),barcodes(bmp)]);
+  var ordreNu=$('ordre').value.trim();
+  var custP=(ekReady()&&ordreNu)?(ekCustRef===ordreNu&&ekCustP?ekCustP:ekShowOrdre()):null;
+  var cust=null;
+  Promise.resolve(custP).then(function(r){return r&&r.cust},function(){return null}).then(function(c){
+    cust=c||null;
+    var full=cust&&CUST_FIELDS.every(function(k){return cust[k]});
+    if(full)status('<span class="spin"></span>Kunden er hentet fra E-komplet. Læser varmepumperne…','info');
+    return bmpP.then(function(bmp){return Promise.all([full?gemini(toJpegBase64(bmp,1600),PROMPT_UNITS,SCHEMA_UNITS):gemini(toJpegBase64(bmp,1600)),barcodes(bmp)])});
   }).then(function(res){
     var d=res[0],codes=res[1];
+    if(cust)CUST_FIELDS.forEach(function(k){if(cust[k])d[k]=cust[k]});
     var fixes=crossCheck(d.udedele,codes)+crossCheck(d.indedele,codes);
     var unknown=[];
     [['ude',d.udedele],['inde',d.indedele]].forEach(function(p){(p[1]||[]).forEach(function(u){var r=fixModel(u.model,p[0]);if(r.ok)u.model=r.model;else if(u.model)unknown.push(u.model)})});
@@ -477,6 +509,7 @@ function analyse(){
     if(!d.udedele||!d.udedele.length)missing.push('udendørsenhed');if(!d.indedele||!d.indedele.length)missing.push('indendørsenhed');
     var extra=codes.length?' Serienumrene er tjekket mod stregkoderne'+(fixes?' ('+fixes+' rettet)':'')+'.':'';
     if(unknown.length)extra+=' ⚠️ Modellen <b>'+unknown.join(', ')+'</b> findes ikke i Panasonics liste. Ret den (der kommer forslag, når du skriver).';
+    if(cust&&CUST_FIELDS.some(function(k){return cust[k]}))extra=' Kundeoplysninger er hentet fra E-komplet.'+extra;
     if(missing.length)status('Læst, men disse felter mangler: <b>'+missing.join(', ')+'</b>. Udfyld dem nedenfor.'+extra,'warn');
     else status('✅ Læst. Tjek felterne, især e-mail og serienumre.'+extra,unknown.length?'warn':'ok');
     ekAuto();
@@ -506,7 +539,7 @@ $('send').onclick=function(){
   d.udedele.concat(d.indedele).forEach(function(u){if(u.model&&!MODELS_UDE.concat(MODELS_INDE).some(function(m){return NM(m)===NM(u.model)}))miss.push('model '+u.model+' findes ikke hos Panasonic')});
   if(miss.length&&!confirm('Disse felter mangler:\n• '+miss.join('\n• ')+'\n\nSend alligevel? (De skal så udfyldes manuelt hos Panasonic)'))return;
   var payload={app:'sael-indscanner',v:1,produktvalg:'1',fornavn:d.fornavn,efternavn:d.efternavn,telefon:d.telefon,email:d.email,
-    reference:d.ordre,adresse:d.adresse,postnr_by:d.postnr_by,dato:d.dato,grossist:GROSSIST,
+    reference:d.adresse,adresse:d.adresse,postnr_by:d.postnr_by,dato:d.dato,grossist:GROSSIST,
     installeret_af:FIRMA,indkobt_af:FIRMA,udedele:d.udedele,indedele:d.indedele};
   if(photo&&ekReady()&&ekDone!==ekKey())ekUpload();
   var txt=JSON.stringify(payload);
@@ -534,12 +567,60 @@ function ekFetch(path,opt){
     if(!r.ok||(j&&pick(j,'hasErrors'))){var m=(j&&(pick(j,'errorMessage')||pick(j,'title')))||('HTTP '+r.status);if(r.status===401)m='API-nøglen eller sitename er forkert';throw new Error(m)}
     return j})});
 }
+function ekNotFound(ref){return new Error('Der findes ingen sag med nummer '+ref+' i E-komplet. Ret sagsnummeret øverst, så uploades billedet automatisk')}
 function ekFindProject(ref){
   return ekFetch('projects/ref/'+encodeURIComponent(ref)).then(function(j){
     var list=pick(j,'data')||[];if(!Array.isArray(list))list=[list];
-    if(!list.length)throw new Error('Der findes ingen sag med nummer '+ref+' i E-komplet');
+    list=list.filter(function(x){return x&&typeof x==='object'&&pick(x,'projectID')});
+    if(!list.length)throw ekNotFound(ref);
     return list;
+  },function(e){
+    var m=String(e&&e.message||e);
+    if(/500|404|not found|ikke fundet|Internal Server/i.test(m))throw ekNotFound(ref);
+    throw e;
   });
+}
+function splitName(c,nm){nm=String(nm||'').trim().replace(/\s+/g,' ');if(!nm)return;var p=nm.split(' ');c.efternavn=p.length>1?p.pop():'';c.fornavn=p.join(' ')||nm}
+function cleanPhone(t){t=String(t||'').replace(/[^\d+]/g,'');t=t.replace(/^(\+45|0045)/,'');if(/^45\d{8}$/.test(t))t=t.slice(2);return t}
+function first(o){if(Array.isArray(o))return o[0];return o}
+function ekLoadCustomer(ref){
+  return ekFindProject(ref).then(function(list){
+    var p=list[0],pid=pick(p,'projectID');
+    return ekFetch('projects/id/'+encodeURIComponent(pid)).then(function(j){
+      var pd=first(pick(j,'data'))||{},c={};
+      var a=pick(pd,'associatedAddress');
+      if(a){c.adresse=[pick(a,'address'),pick(a,'address2')].filter(Boolean).join(', ');var z=pick(a,'zipCode'),ci=pick(a,'city');if(z||ci)c.postnr_by=[z,ci].filter(Boolean).join(' ')}
+      var per=pick(pd,'associatedPerson');
+      if(per){splitName(c,pick(per,'name'));c.telefon=pick(per,'phone');c.email=pick(per,'email')}
+      var cid=pick(pd,'customerID');
+      var more=(!c.fornavn||!c.telefon||!c.email)&&cid?ekFetch('debtors/'+encodeURIComponent(cid)).then(function(jd){
+        var dd=first(pick(jd,'data'));if(!dd)return;
+        var nm=pick(dd,'debtorName');if(nm&&!/ukendt/i.test(nm)&&!c.fornavn)splitName(c,nm);
+        if(!c.telefon)c.telefon=pick(dd,'phone');if(!c.email)c.email=pick(dd,'email');
+      }).catch(function(){}):Promise.resolve();
+      return more.then(function(){
+        c.telefon=cleanPhone(c.telefon);c.email=String(c.email||'').replace(/\s/g,'').toLowerCase();
+        CUST_FIELDS.forEach(function(k){c[k]=String(c[k]||'').trim()});
+        return{proj:p,list:list,cust:c};
+      });
+    },function(){return{proj:p,list:list,cust:{}}});
+  });
+}
+function ekShowOrdre(){
+  var el=$('ordreinfo'),ref=$('ordre').value.trim();
+  if(!ekReady()||!ref){el.className='hint';el.textContent='';ekCustP=null;ekCustRef='';return null}
+  el.className='hint';el.style.color='#66737b';el.textContent='Slår sag '+ref+' op i E-komplet…';
+  ekCustRef=ref;
+  var pr=ekCustP=ekLoadCustomer(ref);
+  pr.then(function(r){
+    if($('ordre').value.trim()!==ref)return;
+    var p=r.proj,c=r.cust,got=CUST_FIELDS.filter(function(k){return c[k]});
+    got.forEach(function(k){if(!$(k).value.trim())$(k).value=c[k]});saveData();
+    el.style.color='#1b5e20';
+    el.innerHTML='✅ Sag <b>'+ref+'</b>: '+[pick(p,'projectName'),pick(p,'customerName')].filter(Boolean).join(' · ')+(r.list.length>1?' (der er '+r.list.length+' sager med dette nummer – den første bruges)':'')+
+      (got.length?'<br>Hentet fra E-komplet: '+got.map(function(k){return{fornavn:'navn',efternavn:'efternavn',telefon:'telefon',email:'e-mail',adresse:'adresse',postnr_by:'postnr/by'}[k]}).join(', '):'');
+  }).catch(function(e){if($('ordre').value.trim()!==ref)return;el.style.color='#8e1c1c';el.textContent='⚠️ '+(e&&e.message||e)+'.'});
+  return pr;
 }
 function shrinkForUpload(file){
   if(file.size<=3.5e6)return Promise.resolve({blob:file,type:file.type||'image/jpeg'});
@@ -569,7 +650,8 @@ function ekUpload(){
 }
 function ekAuto(){if(photo&&ekReady()&&$('ordre').value.trim()&&ekDone!==ekKey())ekUpload()}
 $('ekbtn').onclick=ekUpload;
-$('ordre').addEventListener('change',ekAuto);
+$('ordre').addEventListener('change',function(){ekShowOrdre();ekAuto()});
+if($('ordre').value.trim())ekShowOrdre();
 $('ektest').onclick=function(){
   var b=$('ektest');if(!ekReady()){b.textContent='Udfyld API-nøgle og sitename først';return}
   b.textContent='Tester…';
