@@ -55,7 +55,8 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 <body>
 <header>
   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 12h10"/></svg>
-  <h1>Indscanner<small>Panasonic opstartsprotokol · Salomonsen Electric</small></h1>
+  <h1 style="flex:1">Indscanner<small>Panasonic opstartsprotokol · Salomonsen Electric</small></h1>
+  <button type="button" id="resetTop" style="border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:9px 12px;font-size:15px;font-weight:600;cursor:pointer">🧹 Ryd</button>
 </header>
 <main>
 
@@ -227,7 +228,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 g.querySelectorAll('[data-gd]').forEach(function(b){b.onclick=function(){sel(b.dataset.gd)}});sel(/iPhone|iPad|iPod/.test(navigator.userAgent)?'iphone':'samsung');})();</script></div>
 </details>
 
-<p class="tiny">Indscanner v1.8 · Salomonsen Electric</p>
+<p class="tiny">Indscanner v1.9 · Salomonsen Electric</p>
 </main>
 
 <div id="qrmodal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px">
@@ -673,10 +674,11 @@ $('save').onclick=function(){
   }
 };
 
+$('resetTop').onclick=function(){$('reset').click()};
 $('reset').onclick=function(){
-  if(!confirm('Start en ny scanning? De nuværende felter ryddes.'))return;
+  if(!confirm('Ryd alle felter og start en ny scanning?'))return;
   photo=null;photoDate=null;$('preview').classList.add('hidden');$('status').classList.add('hidden');$('retry').classList.add('hidden');
-  $('datohint').textContent='';$('ekstatus').classList.add('hidden');ekDone=null;setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
+  $('datohint').textContent='';$('ekstatus').classList.add('hidden');ekDone=null;ekCustP=null;ekCustRef='';$('ordreinfo').textContent='';setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
 };
 
 // ---------- setup QR ----------
