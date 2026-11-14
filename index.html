@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indscanner – Panasonic</title>
+<meta name="theme-color" content="#2f3a40">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Indscanner">
+<style>
+:root{--bg:#eef1f3;--card:#fff;--ink:#1d2428;--mute:#66737b;--line:#d6dde1;--accent:#2f3a40;--blue:#0a5ea8;--green:#2e7d32;--red:#c62828;--orange:#ef6c00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:10px}
+header h1{font-size:19px;margin:0;font-weight:650;letter-spacing:.2px}
+header small{display:block;font-size:12.5px;opacity:.75;font-weight:400}
+main{max-width:640px;margin:0 auto;padding:12px 12px 40px}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+label.f{display:block;font-size:13px;color:var(--mute);margin:8px 0 3px}
+input[type=text],input[type=tel],input[type=email],input[type=password],select{width:100%;font-size:17px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none}
+input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:transparent}
+input.warn{border-color:var(--orange);background:#fff8f0}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:15px 14px;font-size:17px;font-weight:600;cursor:pointer;text-decoration:none;color:#fff;background:var(--blue)}
+.btn.big{padding:18px;font-size:18px}
+.btn.green{background:var(--green)}.btn.grey{background:#e3e8eb;color:var(--ink)}.btn.dark{background:var(--accent)}
+.btn:disabled{opacity:.45}
+.btn+.btn,.row+.btn,.btn+.row{margin-top:8px}
+.hidden{display:none!important}
+#preview{width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:#000;margin-top:10px}
+#status{padding:11px 13px;border-radius:10px;margin-top:10px;font-size:15px}
+#status.info{background:#e3f0fb;color:#0b4a80}#status.ok{background:#e6f4e7;color:#1b5e20}#status.err{background:#fdecea;color:#8e1c1c}#status.warn{background:#fff3e0;color:#8a4500}
+.unit{border:1px solid var(--line);border-radius:10px;padding:8px 10px 10px;margin-top:8px;position:relative}
+.unit .x{position:absolute;right:6px;top:4px;border:0;background:none;font-size:20px;color:var(--mute);cursor:pointer;padding:4px 8px}
+.unit .t{font-size:13px;font-weight:600;color:var(--mute)}
+.add{background:none;border:1px dashed var(--line);color:var(--blue);border-radius:10px;width:100%;padding:9px;margin-top:8px;font-size:15px;cursor:pointer}
+details{background:var(--card);border-radius:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+summary{padding:14px;font-weight:600;cursor:pointer;list-style:none}
+summary::after{content:"›";float:right;transform:rotate(90deg);color:var(--mute)}
+details[open] summary::after{transform:rotate(-90deg)}
+details>div{padding:0 14px 14px}
+.hint{font-size:14px;color:var(--mute);margin:6px 0}
+ol{padding-left:20px;margin:6px 0}li{margin:4px 0}
+code{background:#eef1f3;padding:1px 5px;border-radius:5px;font-size:14px}
+a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-radius:9px;font-weight:700;text-decoration:none;border:2px dashed #b28704}
+.spin{width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite;display:inline-block}
+#status .spin{border-color:rgba(11,74,128,.25);border-top-color:#0b4a80;vertical-align:-3px;margin-right:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+.tiny{font-size:12.5px;color:var(--mute);text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<header>
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 12h10"/></svg>
+  <h1>Indscanner<small>Panasonic opstartsprotokol · Salomonsen Electric</small></h1>
+</header>
+<main>
+
+<section class="card">
+  <h2>1 · Ordre</h2>
+  <label class="f" for="ordre">Ordrenummer (E-komplet)</label>
+  <input type="text" id="ordre" inputmode="text" autocomplete="off" placeholder="fx 24117">
+  <p class="hint">Ordrenummeret kommer også i feltet "Installationsreference" hos Panasonic og i billedets filnavn.</p>
+</section>
+
+<section class="card">
+  <h2>2 · Billede af protokollen</h2>
+  <div class="row">
+    <label class="btn big" for="cam">📷 Tag billede</label>
+    <label class="btn big grey" for="gal" style="flex:.55">🖼️ Vælg</label>
+  </div>
+  <input type="file" id="cam" accept="image/*" capture="environment" class="hidden">
+  <input type="file" id="gal" accept="image/*" class="hidden">
+  <img id="preview" class="hidden" alt="Billede af protokol">
+  <div id="status" class="hidden"></div>
+  <button class="btn grey hidden" id="retry" style="margin-top:8px">↻ Læs billedet igen</button>
+</section>
+
+<section class="card" id="fields">
+  <h2>3 · Kontrollér oplysningerne</h2>
+  <div class="row">
+    <div><label class="f" for="fornavn">Fornavn</label><input type="text" id="fornavn" autocomplete="off"></div>
+    <div><label class="f" for="efternavn">Efternavn</label><input type="text" id="efternavn" autocomplete="off"></div>
+  </div>
+  <div class="row">
+    <div><label class="f" for="telefon">Telefon</label><input type="tel" id="telefon" autocomplete="off"></div>
+  </div>
+  <label class="f" for="email">E-mail</label><input type="email" id="email" autocomplete="off" autocapitalize="off">
+  <label class="f" for="adresse">Installationsadresse</label><input type="text" id="adresse" autocomplete="off">
+  <label class="f" for="postnr_by">Postnummer &amp; by</label><input type="text" id="postnr_by" autocomplete="off">
+  <label class="f" for="dato">Idriftsættelsesdato (dd-mm-åååå)</label><input type="text" id="dato" inputmode="numeric" autocomplete="off" placeholder="dd-mm-åååå">
+  <p class="hint" id="datohint"></p>
+
+  <label class="f">Udendørsenhed(er)</label>
+  <div id="ude"></div>
+  <button class="add" data-add="ude">+ Tilføj udendørsenhed</button>
+
+  <label class="f" style="margin-top:14px">Indendørsenhed(er)</label>
+  <div id="inde"></div>
+  <button class="add" data-add="inde">+ Tilføj indendørsenhed</button>
+</section>
+
+<section class="card">
+  <h2>4 · Send og gem</h2>
+  <button class="btn dark" id="save">💾 Gem billede som dokumentation</button>
+  <p class="hint" id="savehint">Gemmer billedet som <code>Ordre_[nr]_Panasonic_opstart_[dato].jpg</code>. På telefonen kan du dele det direkte til E-komplet-appen eller Filer.</p>
+  <button class="btn big green" id="send">➜ Send til Panasonic</button>
+  <p class="hint">Kopierer oplysningerne og åbner Panasonic. Tryk på bogmærket <b>Panasonic udfyld</b> dér. Tryk igen, når siden har skiftet. Sæt så flueben ved "Jeg bekræfter", og tryk "Send anmodning".</p>
+  <button class="btn grey" id="reset">Ny scanning</button>
+</section>
+
+<details id="setup">
+  <summary>⚙️ Indstillinger</summary>
+  <div>
+    <label class="f" for="apikey">Google Gemini API-nøgle (gratis)</label>
+    <input type="password" id="apikey" autocomplete="off" placeholder="AIza…">
+    <p class="hint">Hent en gratis nøgle på <b>aistudio.google.com</b> → "Get API key". Nøglen gemmes kun på denne telefon.</p>
+    <label class="f" for="model">AI-model</label>
+    <input type="text" id="model" autocomplete="off">
+    <label class="f" for="grossist">Grossist (påkrævet hos Panasonic)</label>
+    <select id="grossist">
+      <option value="">– vælg –</option>
+      <option>Panasonic forhandler</option><option>Bestair</option>
+      <option>Brødrene A&amp;O Johansen</option><option>Brødrene Dahl</option>
+      <option>H. Jessen &amp; Jürgensen</option><option>Kinnan Danmark</option>
+      <option>Lemvigh-Müller</option><option>Solar Danmark</option>
+    </select>
+    <label class="f" for="installeret_af">Installeret af firma</label>
+    <input type="text" id="installeret_af" autocomplete="off">
+    <label class="f" for="indkobt_af">Indkøbt af firma (valgfri)</label>
+    <input type="text" id="indkobt_af" autocomplete="off">
+  </div>
+</details>
+
+<details id="bmsetup">
+  <summary>🔖 Opsætning af bogmærket "Panasonic udfyld"</summary>
+  <div>
+    <p class="hint">Bogmærket skal kun sættes op én gang pr. telefon eller computer. Det er det, der udfylder Panasonic-siden.</p>
+    <p><b>På computeren (Chrome):</b> Træk den gule knap op i bogmærkelinjen:<br><a class="bm" id="bmlink" href="#">Panasonic udfyld</a></p>
+    <button class="btn grey" id="copybm">Kopiér bogmærke-koden</button>
+    <p style="margin-top:14px"><b>iPhone (Safari):</b></p>
+    <ol>
+      <li>Tryk på knappen ovenfor for at kopiere koden.</li>
+      <li>I Safari: Tryk på Del-ikonet → <b>Føj bogmærke til</b>. Kald det <code>Panasonic udfyld</code> → Gem.</li>
+      <li>Åbn Bogmærker → Rediger → tryk på <b>Panasonic udfyld</b>. Slet adressen og sæt den kopierede kode ind → OK.</li>
+      <li>Brug: Når du står på Panasonic-siden, åbner du Bogmærker og trykker <b>Panasonic udfyld</b>.</li>
+    </ol>
+    <p style="margin-top:10px"><b>Samsung/Android (brug Chrome):</b></p>
+    <ol>
+      <li>Tryk på knappen ovenfor for at kopiere koden.</li>
+      <li>I Chrome: ⋮ → ☆ (bogmærk siden). Tryk <b>Rediger</b>. Navn: <code>Panasonic udfyld</code>. Slet URL'en, sæt koden ind, og gem.</li>
+      <li>Brug: Når du står på Panasonic-siden, tryk i adresselinjen, skriv <code>Panasonic udfyld</code>, og tryk på bogmærket i forslagene (det med stjernen).</li>
+    </ol>
+  </div>
+</details>
+
+<details>
+  <summary>📲 Læg appen på hjemmeskærmen</summary>
+  <div>
+    <p><b>iPhone:</b> Åbn siden i Safari → Del-ikonet → <b>Føj til hjemmeskærm</b>.</p>
+    <p><b>Samsung/Android:</b> Åbn siden i Chrome → ⋮ → <b>Føj til startskærm</b>.</p>
+    <p class="hint">Der skal ikke noget gennem App Store eller Google Play.</p>
+  </div>
+</details>
+
+<p class="tiny">Indscanner v1.0 · Salomonsen Electric</p>
+</main>
+
+<textarea id="clipfallback" readonly aria-hidden="true" tabindex="-1" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0"></textarea>
+<script type="text/plain" id="bmsrc">(async()=>{
+const K='saelIndscan',U='https://www.panasonicproclub.com/DK_da/service/commissioning-submit/new/';
+const msg=(t,c)=>{let b=document.getElementById('saelMsg');if(!b){b=document.createElement('div');b.id='saelMsg';b.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:99999;padding:14px 16px;border-radius:10px;font:16px/1.45 sans-serif;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.35);cursor:pointer';document.body.appendChild(b);b.onclick=()=>b.remove();}b.style.background=c||'#1565c0';b.innerHTML=t;};
+if(location.href.indexOf('/commissioning-submit/new')<0){location.href=U;return;}
+let raw=sessionStorage.getItem(K);
+if(!raw){try{raw=await navigator.clipboard.readText();}catch(e){raw=prompt('Indsæt data fra Indscanner her:')||'';}}
+let d;try{d=JSON.parse(raw);if(d.app!=='sael-indscanner')throw 0;}catch(e){msg('Ingen scanning fundet. Tryk først på <b>Send til Panasonic</b> i Indscanner-appen, og tryk så på bogmærket igen.','#c62828');return;}
+sessionStorage.setItem(K,JSON.stringify(d));
+const f=[...document.forms].find(x=>x.querySelector('[name^=frm_product_range]'));
+if(!f){msg('Kunne ikke finde garantiformularen på siden. Er du logget ind?','#c62828');return;}
+if(!f.querySelector('[name=frm_we_customer_name]')){const s=f.querySelector('[name=frm_product_range]');s.value=d.produktvalg||'1';msg('Vælger produkttype… <b>Tryk på bogmærket igen</b>, når siden er indlæst.');f.querySelector('[name=next]').click();return;}
+const $=window.jQuery,miss=[];
+const q=n=>[...f.querySelectorAll('[name="'+n+'"]')];
+const S=(n,v,i)=>{const e=q(n)[i||0];if(!e||v==null||v==='')return;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
+const N=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const M=(e,v,starts)=>{if(!e||!v)return;const o=[...e.options].find(o=>starts?N(o.text).indexOf(N(v))===0:N(o.text)===N(v));if(!o){miss.push(v);return;}e.value=o.value;if($)$(e).trigger('change').trigger('liszt:updated').trigger('chosen:updated');else e.dispatchEvent(new Event('change',{bubbles:true}));};
+S('frm_we_customer_name',d.fornavn);S('frm_we_customer_lastname',d.efternavn);S('frm_we_customer_phone',d.telefon);S('frm_we_customer_email',d.email);
+S('frm_installation_reference',d.reference);S('frm_address_installation',d.adresse);S('frm_postalcode_installation',d.postnr_by);
+const de=q('frm_data_installation')[0];if(de&&d.dato){de.value=d.dato;if($&&$.fn.datepicker){try{$(de).attr('data-date',d.dato).datepicker('setValue',d.dato);}catch(e){}}de.value=d.dato;}
+M(q('frm_distribuidor')[0],d.grossist,true);
+S('frm_dk_purchased_by',d.indkobt_af);S('frm_dk_installed_by',d.installeret_af);
+const units=async(kind,list,btn)=>{for(let i=0;i<list.length;i++){let sel=q('frm_'+kind+'_unit_product_ref[]');if(i>=sel.length){const b=[...f.querySelectorAll('button,a,input[type=button],input[type=submit]')].find(b=>(b.innerText||b.value||'').trim().toLowerCase()===btn);if(!b)break;b.click();await new Promise(r=>setTimeout(r,500));sel=q('frm_'+kind+'_unit_product_ref[]');}M(sel[i],list[i].model);S('frm_'+kind+'_unit_serial_number[]',list[i].serie,i);}};
+await units('outdoors',d.udedele||[],'tilføj udendørs');await units('indoors',d.indedele||[],'tilføj indendørs');
+sessionStorage.removeItem(K);
+const cb=document.getElementById('frm_check_obligatorio');if(cb)cb.scrollIntoView({block:'center'});
+msg((miss.length?'⚠️ Disse ting fandtes ikke i Panasonics lister og skal vælges manuelt: <b>'+miss.join(', ')+'</b><br>':'')+'✅ Udfyldt. Tjek felterne, sæt flueben ved <b>Jeg bekræfter</b> og tryk <b>Send anmodning</b>. (Tryk her for at lukke)',miss.length?'#ef6c00':'#2e7d32');
+})();</script>
+<script>
+(function(){
+'use strict';
+var PANASONIC_URL='https://www.panasonicproclub.com/DK_da/service/commissioning-submit/new/';
+var SKEY='saelIndscanSettings', DKEY='saelIndscanData';
+var DEFAULTS={apikey:'',model:'gemini-flash-latest',grossist:'',installeret_af:'Salomonsen Electric',indkobt_af:''};
+var FIELDS=['fornavn','efternavn','telefon','email','adresse','postnr_by','dato'];
+var $=function(id){return document.getElementById(id)};
+var photo=null, photoDate=null;
+
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+var settings=Object.assign({},DEFAULTS,store(SKEY)||{});
+
+// ---------- settings ----------
+['apikey','model','grossist','installeret_af','indkobt_af'].forEach(function(k){
+  var el=$(k); el.value=settings[k]||'';
+  el.addEventListener('change',function(){settings[k]=el.value.trim();store(SKEY,settings)});
+});
+if(!settings.apikey||!settings.grossist) $('setup').open=true;
+
+// ---------- units ----------
+function unitEl(kind,u){
+  var d=document.createElement('div');d.className='unit';
+  var n=$(kind).children.length+1;
+  d.innerHTML='<span class="t">'+(kind==='ude'?'Udendørs':'Indendørs')+' '+n+'</span><button class="x" title="Fjern">×</button>'+
+   '<div class="row"><div><label class="f">Model</label><input type="text" class="m" autocapitalize="characters" autocomplete="off" placeholder="'+(kind==='ude'?'CU-…':'CS-…')+'"></div>'+
+   '<div><label class="f">Serienummer</label><input type="text" class="s" autocapitalize="characters" autocomplete="off"></div></div>';
+  d.querySelector('.m').value=(u&&u.model)||'';d.querySelector('.s').value=(u&&u.serie)||'';
+  d.querySelector('.x').onclick=function(){d.remove();renumber(kind);saveData()};
+  d.addEventListener('input',saveData);
+  return d;
+}
+function renumber(kind){[].forEach.call($(kind).children,function(c,i){c.querySelector('.t').textContent=(kind==='ude'?'Udendørs ':'Indendørs ')+(i+1)})}
+function setUnits(kind,list){$(kind).innerHTML='';(list&&list.length?list:[{}]).forEach(function(u){$(kind).appendChild(unitEl(kind,u))})}
+function getUnits(kind){return [].map.call($(kind).children,function(c){return{model:c.querySelector('.m').value.trim().toUpperCase(),serie:c.querySelector('.s').value.trim().toUpperCase()}}).filter(function(u){return u.model||u.serie})}
+document.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){$(b.dataset.add).appendChild(unitEl(b.dataset.add));saveData()}});
+
+// ---------- data state ----------
+function getData(){var d={ordre:$('ordre').value.trim()};FIELDS.forEach(function(k){d[k]=$(k).value.trim()});d.udedele=getUnits('ude');d.indedele=getUnits('inde');return d}
+function setData(d){d=d||{};$('ordre').value=d.ordre||'';FIELDS.forEach(function(k){$(k).value=d[k]||''});setUnits('ude',d.udedele);setUnits('inde',d.indedele);validate()}
+function saveData(){store(DKEY,getData());validate()}
+document.querySelectorAll('#fields input,#ordre').forEach(function(i){i.addEventListener('input',saveData)});
+setData(store(DKEY));
+
+function validate(){
+  FIELDS.forEach(function(k){$(k).classList.toggle('warn',!$(k).value.trim())});
+  var dv=$('dato').value.trim();
+  if(dv&&!/^\d{2}-\d{2}-\d{4}$/.test(dv))$('dato').classList.add('warn');
+  document.querySelectorAll('.unit input').forEach(function(i){i.classList.toggle('warn',!i.value.trim())});
+}
+
+// ---------- status ----------
+function status(html,type){var s=$('status');s.className=type||'info';s.innerHTML=html;s.classList.remove('hidden')}
+
+// ---------- date helpers ----------
+function pad(n){return(n<10?'0':'')+n}
+function fmtDate(dt){return pad(dt.getDate())+'-'+pad(dt.getMonth()+1)+'-'+dt.getFullYear()}
+function normDate(s){
+  if(!s)return'';var m=String(s).match(/(\d{1,2})\D+(\d{1,2})\D+(\d{2,4})/);if(!m)return'';
+  var y=+m[3];if(y<100)y+=2000;var d=+m[1],mo=+m[2];if(d<1||d>31||mo<1||mo>12)return'';return pad(d)+'-'+pad(mo)+'-'+y;
+}
+
+// ---------- image ----------
+function onFile(e){
+  var f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  photo=f;photoDate=new Date(f.lastModified||Date.now());
+  if(Date.now()-photoDate>36e5*24*365||photoDate>Date.now()+6e4)photoDate=new Date();
+  var url=URL.createObjectURL(f);$('preview').src=url;$('preview').classList.remove('hidden');
+  analyse();
+}
+$('cam').addEventListener('change',onFile);$('gal').addEventListener('change',onFile);
+$('retry').onclick=analyse;
+
+function loadBitmap(file){
+  if(window.createImageBitmap){return createImageBitmap(file,{imageOrientation:'from-image'}).catch(function(){return createImageBitmap(file)})}
+  return new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i)};i.onerror=rej;i.src=URL.createObjectURL(file)});
+}
+function toJpegBase64(bmp,max){
+  var w=bmp.width,h=bmp.height,sc=Math.min(1,max/Math.max(w,h));
+  var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);
+  c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.85).split(',')[1];
+}
+
+var PROMPT='Billedet viser en udfyldt dansk "Garanti/Service/opstartsprotokol" for Panasonic luft-til-luft varmepumper. '+
+'Udtræk KUN kundeoplysningerne (håndskrevet under "Kundeoplysninger") og varmepumpeoplysningerne (typeskilt-labels under "Varmepumpeoplysninger"). '+
+'Ignorér installatøroplysninger (Salomonsen Electric), tjekliste, temperaturer, underskrifter, pris og wifi-kode. '+
+'Regler: Del "Kunde/anlægsansvarlig" i fornavn (alle fornavne) og efternavn (sidste navn). '+
+'Telefon: kun cifre, ingen mellemrum (8 cifre er normalt). E-mail: små bogstaver, ingen mellemrum; vær omhyggelig med håndskriften. '+
+'postnr_by: fx "9800 Hjørring". dato: værdien ved "Idriftsættelsesdato" i formatet dd-mm-åååå, eller tom streng hvis feltet er tomt. '+
+'Udendørsenheder har model der starter med "CU-" (eller WH-/U-); indendørsenheder med "CS-" (eller S-/WH-). '+
+'På hver label står modellen under den første stregkode og serienummeret under den anden stregkode (fx F028518912 / E245808555). '+
+'Aflæs tegn for tegn præcist; forveksl ikke 0/O, 1/I, 5/S, 8/B. Der kan være flere enheder (multisplit). '+
+'Hvis noget ikke kan læses, så returnér tom streng for det felt. Svar kun med JSON.';
+var SCHEMA={type:'OBJECT',properties:{
+  fornavn:{type:'STRING'},efternavn:{type:'STRING'},telefon:{type:'STRING'},email:{type:'STRING'},
+  adresse:{type:'STRING'},postnr_by:{type:'STRING'},dato:{type:'STRING'},
+  udedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}},
+  indedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}}
+},required:['fornavn','efternavn','telefon','email','adresse','postnr_by','dato','udedele','indedele']};
+
+function gemini(b64){
+  var model=(settings.model||DEFAULTS.model).replace(/^models\//,'');
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
+    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':settings.apikey},
+    body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
+      generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:SCHEMA}})
+  }).then(function(r){return r.json().then(function(j){
+    if(!r.ok){var m=(j&&j.error&&j.error.message)||('HTTP '+r.status);throw new Error(m)}
+    var t=(((j.candidates||[])[0]||{}).content||{}).parts;t=(t||[]).map(function(p){return p.text||''}).join('');
+    if(!t)throw new Error('AI gav intet svar');
+    return JSON.parse(t.replace(/^```json|```$/g,''));
+  })});
+}
+
+// Levenshtein for barcode cross-check
+function lev(a,b){var m=a.length,n=b.length,d=[],i,j;for(i=0;i<=m;i++)d[i]=[i];for(j=0;j<=n;j++)d[0][j]=j;
+  for(i=1;i<=m;i++)for(j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
+function barcodes(bmp){
+  if(!('BarcodeDetector' in window))return Promise.resolve([]);
+  try{return new BarcodeDetector().detect(bmp).then(function(r){return r.map(function(x){return String(x.rawValue||'').trim().toUpperCase()}).filter(Boolean)}).catch(function(){return[]})}catch(e){return Promise.resolve([])}
+}
+function crossCheck(units,codes){
+  var fixed=0;(units||[]).forEach(function(u){['model','serie'].forEach(function(k){
+    var v=(u[k]||'').toUpperCase().replace(/\s/g,'');if(!v)return;if(codes.indexOf(v)>=0)return;
+    var best=null,bd=9;codes.forEach(function(c){if(Math.abs(c.length-v.length)>1)return;var dd=lev(v,c);if(dd<bd){bd=dd;best=c}});
+    if(best&&bd<=2){u[k]=best;fixed++}
+  })});return fixed;
+}
+
+function analyse(){
+  if(!photo){status('Tag først et billede.','warn');return}
+  $('retry').classList.add('hidden');
+  if(!settings.apikey){
+    if(!$('dato').value)$('dato').value=fmtDate(photoDate);
+    status('Der er ingen AI-nøgle under ⚙️ Indstillinger, så felterne skal udfyldes manuelt.','warn');$('setup').open=true;saveData();return;
+  }
+  status('<span class="spin"></span>Læser protokollen… (5–15 sek.)','info');
+  var bmpP=loadBitmap(photo);
+  bmpP.then(function(bmp){
+    return Promise.all([gemini(toJpegBase64(bmp,2000)),barcodes(bmp)]);
+  }).then(function(res){
+    var d=res[0],codes=res[1];
+    var fixes=crossCheck(d.udedele,codes)+crossCheck(d.indedele,codes);
+    var ordre=$('ordre').value;
+    d.dato=normDate(d.dato);var datoFraFoto=!d.dato;if(!d.dato)d.dato=fmtDate(photoDate);
+    d.telefon=String(d.telefon||'').replace(/[^\d+]/g,'');
+    d.email=String(d.email||'').replace(/\s/g,'').toLowerCase();
+    d.ordre=ordre;setData(d);saveData();
+    $('datohint').textContent=datoFraFoto?'Der stod ingen dato på papiret, så billedets dato er brugt.':'';
+    var missing=FIELDS.filter(function(k){return!d[k]});
+    if(!d.udedele||!d.udedele.length)missing.push('udendørsenhed');if(!d.indedele||!d.indedele.length)missing.push('indendørsenhed');
+    var extra=codes.length?' Serienumrene er tjekket mod stregkoderne'+(fixes?' ('+fixes+' rettet)':'')+'.':'';
+    if(missing.length)status('Læst, men disse felter mangler: <b>'+missing.join(', ')+'</b>. Udfyld dem nedenfor.'+extra,'warn');
+    else status('✅ Læst. Tjek felterne, især e-mail og serienumre.'+extra,'ok');
+    $('retry').classList.remove('hidden');
+    $('fields').scrollIntoView({behavior:'smooth',block:'start'});
+  }).catch(function(err){
+    var m=String(err&&err.message||err);
+    if(/API key|API_KEY|permission|403|400/i.test(m))m+=' – tjek API-nøglen under Indstillinger.';
+    if(/quota|429|exhausted/i.test(m))m+=' – den gratis kvote er brugt lige nu. Prøv igen om lidt.';
+    if(/not found|404/i.test(m))m+=' – prøv en anden AI-model under Indstillinger, fx gemini-2.5-flash.';
+    if(!$('dato').value)$('dato').value=fmtDate(photoDate);
+    status('Kunne ikke læse billedet: '+m,'err');$('retry').classList.remove('hidden');saveData();
+  });
+}
+
+// ---------- send to Panasonic ----------
+function copyText(t){
+  if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).catch(function(){return legacyCopy(t)});
+  return Promise.resolve(legacyCopy(t));
+}
+function legacyCopy(t){var ta=$('clipfallback');ta.value=t;ta.readOnly=false;ta.focus();ta.select();ta.setSelectionRange(0,t.length);var ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.blur();ta.readOnly=true;if(window.getSelection)window.getSelection().removeAllRanges();if(!ok)throw new Error('copy');return true}
+
+$('send').onclick=function(){
+  var d=getData();var miss=FIELDS.filter(function(k){return!d[k]});
+  if(!d.udedele.length)miss.push('udendørsenhed');if(!d.indedele.length)miss.push('indendørsenhed');
+  if(d.dato&&!/^\d{2}-\d{2}-\d{4}$/.test(d.dato))miss.push('dato i formatet dd-mm-åååå');
+  if(!settings.grossist)miss.push('grossist (Indstillinger)');
+  if(miss.length&&!confirm('Disse felter mangler:\n• '+miss.join('\n• ')+'\n\nSend alligevel? (De skal så udfyldes manuelt hos Panasonic)'))return;
+  var payload={app:'sael-indscanner',v:1,produktvalg:'1',fornavn:d.fornavn,efternavn:d.efternavn,telefon:d.telefon,email:d.email,
+    reference:d.ordre,adresse:d.adresse,postnr_by:d.postnr_by,dato:d.dato,grossist:settings.grossist,
+    installeret_af:settings.installeret_af,indkobt_af:settings.indkobt_af,udedele:d.udedele,indedele:d.indedele};
+  var txt=JSON.stringify(payload);
+  var okMsg='📋 Oplysningerne er kopieret. På Panasonic-siden: tryk på bogmærket <b>Panasonic udfyld</b> (to gange, hvis siden skifter).';
+  var copied=false;try{copied=legacyCopy(txt)}catch(e){}
+  if(copied){status(okMsg,'ok');if(!window.open(PANASONIC_URL,'_blank'))status(okMsg+'<br><a href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic</a>','ok');return}
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){
+    status(okMsg+'<br><a class="btn green" style="margin-top:8px" href="'+PANASONIC_URL+'" target="_blank">Åbn Panasonic ➜</a>','ok');
+  }).catch(function(){status('Kunne ikke kopiere automatisk. Prøv igen.','err')});
+};
+
+// ---------- save photo ----------
+$('save').onclick=function(){
+  if(!photo){status('Der er intet billede at gemme endnu.','warn');return}
+  var ordre=($('ordre').value.trim()||'uden-ordrenr').replace(/[^\w\-]+/g,'_');
+  var dt=photoDate||new Date();
+  var name='Ordre_'+ordre+'_Panasonic_opstart_'+dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'.jpg';
+  var file=new File([photo],name,{type:photo.type||'image/jpeg'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    navigator.share({files:[file],title:name,text:'Panasonic opstartsprotokol – ordre '+ordre}).catch(function(){});
+  }else{
+    var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
+  }
+};
+
+$('reset').onclick=function(){
+  if(!confirm('Start en ny scanning? De nuværende felter ryddes.'))return;
+  photo=null;photoDate=null;$('preview').classList.add('hidden');$('status').classList.add('hidden');$('retry').classList.add('hidden');
+  $('datohint').textContent='';setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
+};
+
+// ---------- bookmarklet ----------
+var bmCode='javascript:'+encodeURIComponent($('bmsrc').textContent.trim());
+$('bmlink').href=bmCode;$('bmlink').onclick=function(e){e.preventDefault();alert('Træk knappen op i bogmærkelinjen i stedet for at klikke på den.')};
+$('copybm').onclick=function(){copyText(bmCode).then(function(){$('copybm').textContent='✓ Koden er kopieret';setTimeout(function(){$('copybm').textContent='Kopiér bogmærke-koden'},2500)}).catch(function(){prompt('Kopiér koden:',bmCode)})};
+})();
+</script>
+</body>
+</html>
