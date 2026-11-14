@@ -118,7 +118,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
   <summary>⚙️ Indstillinger</summary>
   <div>
     <label class="f" for="apikey">Google Gemini API-nøgle (gratis)</label>
-    <input type="password" id="apikey" autocomplete="off" placeholder="AIza…">
+    <input type="password" id="apikey" autocomplete="off" placeholder="AIza… eller AQ.…">
     <p class="hint">Hent en gratis nøgle på <b>aistudio.google.com</b> → "Get API key". Nøglen gemmes kun på denne telefon.</p>
     <label class="f" for="model">AI-model</label>
     <input type="text" id="model" autocomplete="off">
@@ -167,7 +167,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
   </div>
 </details>
 
-<p class="tiny">Indscanner v1.2 · Salomonsen Electric</p>
+<p class="tiny">Indscanner v1.3 · Salomonsen Electric</p>
 </main>
 
 <div id="qrmodal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px">
@@ -344,18 +344,37 @@ var SCHEMA={type:'OBJECT',properties:{
   indedele:{type:'ARRAY',items:{type:'OBJECT',properties:{model:{type:'STRING'},serie:{type:'STRING'}},required:['model','serie']}}
 },required:['fornavn','efternavn','telefon','email','adresse','postnr_by','dato','udedele','indedele']};
 
-function gemini(b64){
-  var model=(settings.model||DEFAULTS.model).replace(/^models\//,'');
+var FALLBACK_MODELS=['gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest'];
+function geminiOnce(model,b64,ms){
+  var ac=window.AbortController?new AbortController():null;var tm=ac?setTimeout(function(){ac.abort()},ms):null;
   return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
-    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':settings.apikey},
+    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':(settings.apikey||'').trim()},signal:ac?ac.signal:undefined,
     body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
       generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:SCHEMA}})
   }).then(function(r){return r.json().then(function(j){
-    if(!r.ok){var m=(j&&j.error&&j.error.message)||('HTTP '+r.status);throw new Error(m)}
+    if(tm)clearTimeout(tm);
+    if(!r.ok){var e=new Error((j&&j.error&&j.error.message)||('HTTP '+r.status));e.status=r.status;throw e}
     var t=(((j.candidates||[])[0]||{}).content||{}).parts;t=(t||[]).map(function(p){return p.text||''}).join('');
-    if(!t)throw new Error('AI gav intet svar');
+    if(!t){var e2=new Error('AI gav intet svar');e2.status=503;throw e2}
     return JSON.parse(t.replace(/^```json|```$/g,''));
-  })});
+  })},function(err){if(tm)clearTimeout(tm);var e=new Error(err&&err.name==='AbortError'?'AI-modellen svarede ikke i tide':String(err&&err.message||err));e.status=err&&err.name==='AbortError'?504:0;throw e});
+}
+function gemini(b64){
+  var first=(settings.model||DEFAULTS.model).replace(/^models\//,'').trim();
+  var list=[first].concat(FALLBACK_MODELS.filter(function(m){return m!==first}));
+  var i=0,lastErr=null;
+  function next(){
+    if(i>=list.length)return Promise.reject(lastErr||new Error('Ingen AI-model svarede'));
+    var m=list[i++];
+    if(i>1)status('<span class="spin"></span>Prøver en anden AI-model ('+m+')…','info');
+    return geminiOnce(m,b64,i===list.length?60000:30000).catch(function(e){
+      lastErr=e;
+      if(e.status===400&&/API key|API_KEY/i.test(e.message))throw e;
+      if(e.status===401||e.status===403)throw e;
+      return next();
+    });
+  }
+  return next();
 }
 
 // Levenshtein for barcode cross-check
