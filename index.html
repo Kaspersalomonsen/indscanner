@@ -61,7 +61,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 
 <section class="card">
   <h2>1 · Ordre</h2>
-  <label class="f" for="ordre">Ordrenummer (E-komplet)</label>
+  <label class="f" for="ordre">Sags-/ordrenummer (E-komplet)</label>
   <input type="text" id="ordre" inputmode="text" autocomplete="off" placeholder="fx 24117">
   <p class="hint">Ordrenummeret kommer også i feltet "Installationsreference" hos Panasonic og i billedets filnavn.</p>
 </section>
@@ -105,8 +105,10 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
 
 <section class="card">
   <h2>4 · Send og gem</h2>
-  <button class="btn dark" id="save">💾 Gem billede som dokumentation</button>
-  <p class="hint" id="savehint">Gemmer billedet som <code>Ordre_[nr]_Panasonic_opstart_[dato].jpg</code>. På telefonen kan du dele det direkte til E-komplet-appen eller Filer.</p>
+  <div id="ekstatus" class="hidden" style="padding:11px 13px;border-radius:10px;margin-bottom:8px;font-size:15px"></div>
+  <button class="btn dark" id="ekbtn">☁️ Upload billede til E-komplet</button>
+  <button class="btn grey" id="save">💾 Gem billede på telefonen</button>
+  <p class="hint" id="savehint">Billedet får navnet <code>Ordre_[nr]_Panasonic_opstart_[dato].jpg</code>. Når E-komplet er sat op under Indstillinger, bliver det uploadet automatisk til sagen med det sagsnummer, du har skrevet.</p>
   <button class="btn big green" id="send">➜ Send til Panasonic</button>
   <p class="hint">Kopierer oplysningerne og åbner Panasonic. Tryk på bogmærket <b>Panasonic udfyld</b> dér. Tryk igen, når siden har skiftet. Sæt så flueben ved "Jeg bekræfter", og tryk "Send anmodning".</p>
   <button class="btn grey" id="reset">Ny scanning</button>
@@ -120,18 +122,14 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
     <p class="hint">Hent en gratis nøgle på <b>aistudio.google.com</b> → "Get API key". Nøglen gemmes kun på denne telefon.</p>
     <label class="f" for="model">AI-model</label>
     <input type="text" id="model" autocomplete="off">
-    <label class="f" for="grossist">Grossist (påkrævet hos Panasonic)</label>
-    <select id="grossist">
-      <option value="">– vælg –</option>
-      <option>Panasonic forhandler</option><option>Bestair</option>
-      <option>Brødrene A&amp;O Johansen</option><option>Brødrene Dahl</option>
-      <option>H. Jessen &amp; Jürgensen</option><option>Kinnan Danmark</option>
-      <option>Lemvigh-Müller</option><option>Solar Danmark</option>
-    </select>
-    <label class="f" for="installeret_af">Installeret af firma</label>
-    <input type="text" id="installeret_af" autocomplete="off">
-    <label class="f" for="indkobt_af">Indkøbt af firma (valgfri)</label>
-    <input type="text" id="indkobt_af" autocomplete="off">
+    <p class="hint">Panasonic udfyldes altid med: Grossist = <b>Panasonic forhandler</b>, Indkøbt af og Installeret af = <b>Salomonsen Electric</b>.</p>
+    <h3 style="font-size:15px;margin:18px 0 4px">E-komplet</h3>
+    <label class="f" for="ekkey">E-komplet API-nøgle</label>
+    <input type="password" id="ekkey" autocomplete="off">
+    <label class="f" for="eksite">E-komplet sitename</label>
+    <input type="text" id="eksite" autocomplete="off" autocapitalize="off" placeholder="fx salomonsen">
+    <p class="hint">Sitename er den første del af jeres E-komplet-adresse, fx <code>salomonsen</code> i salomonsen.e-komplet.dk. Når begge felter er udfyldt, bliver billedet automatisk uploadet til sagen som sagsdokumentation.</p>
+    <button class="btn grey" id="ektest">Test forbindelsen til E-komplet</button>
   </div>
 </details>
 
@@ -166,7 +164,7 @@ a.bm{display:inline-block;background:#ffd54f;color:#000;padding:9px 14px;border-
   </div>
 </details>
 
-<p class="tiny">Indscanner v1.0 · Salomonsen Electric</p>
+<p class="tiny">Indscanner v1.1 · Salomonsen Electric</p>
 </main>
 
 <textarea id="clipfallback" readonly aria-hidden="true" tabindex="-1" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0"></textarea>
@@ -197,12 +195,16 @@ sessionStorage.removeItem(K);
 const cb=document.getElementById('frm_check_obligatorio');if(cb)cb.scrollIntoView({block:'center'});
 msg((miss.length?'⚠️ Disse ting fandtes ikke i Panasonics lister og skal vælges manuelt: <b>'+miss.join(', ')+'</b><br>':'')+'✅ Udfyldt. Tjek felterne, sæt flueben ved <b>Jeg bekræfter</b> og tryk <b>Send anmodning</b>. (Tryk her for at lukke)',miss.length?'#ef6c00':'#2e7d32');
 })();</script>
+<script>var MODELS_UDE="CU-CZ25WKE,CU-CZ35WKE,CU-NZ25VKE,CU-NZ35VKE,CU-NZ50VKE,CU-HZ25WKE,CU-HZ35WKE,CU-HZ25WKE-5,CU-HZ35WKE-5,CU-HZ25XKE,CU-HZ35XKE,CU-HZ25XKE-5,CU-HZ35XKE-5,CU-Z25UFEA-1,CU-Z35UFEA-1,CU-VZ9SKE,CU-VZ12SKE,CU-2Z35TBE,CU-2Z41TBE,CU-2Z50TBE,CU-3Z52TBE,CU-3Z68TBE,CU-4Z68TBE,CU-4Z80TBE,CU-5Z90TBE,WH-UD03JE5,WH-UD05JE5,WH-UD07JE5,WH-UD09JE5-1,WH-MDC05J3E5,WH-MDC07J3E5,WH-MDC09J3E5,WH-MXC09J3E8,WH-MXC12J9E8,WH-MXC16J9E8,U-36PZH3E5,U-50PZH3E5,U-60PZH3E5,U-71PZH3E5,U-71PZH3E8,U-100PZH3E5,U-100PZH3E8,U-125PZH3E5,U-125PZH3E8,U-140PZH3E5,U-140PZH3E8,U-200PZH2E8,U-250PZH2E8,U-100PZ3E5,U-100PZ3E8,U-125PZ3E5,U-125PZ3E8,U-140PZ3E5,U-140PZ3E8,CU-Z25TKEA,CU-Z35TKEA,CU-Z42TKEA,CU-Z50TKEA,CU-Z71TKEA,U-4LE2E5,U-4LE2E8,U-5LE2E5,U-5LE2E8,U-6LE2E5,U-6LE2E8,U-8LE1E8,U-10LE1E8,U-8LZ2E8,U-4LZ2E8,OCU-CR200VF5A,OCU-CR200VF5ASL,OCU-CR400VF8,OCU-CR400VF8SL,OCU-CR1000VF8,OCU-CR1000VF8SL,OCU-CR1000VF8A,OCU-CR1000VF8ASL,CU-Z50UBEA,CU-Z35UBEA,CU-Z25UBEA,CU-LZ25TKE,CU-LZ35TKE,CU-HZ25UKE,CU-NZ25YKE,CU-NZ35YKE,CU-Z35YKEA,CU-NZ50YKE,WH-MXC16H9E8,U-60PZ3E5A,CU-Z25YKEA,CU-Z42YKEA,CU-Z50YKEA,CU-Z71YKEA,CU-NZ35TKE,U-36PZ3E5,CU-NZ25TKE,CU-HZ9RKE-1,CU-HZ25TKE,CU-CZ9SKE,CU-AZ9RKE-1,CU-QZ25VKE,CU-CZ25TKE,CU-QZ9SKE,CU-CZ12SKE,WH-UD12HE8,WH-WDG05LE5,WH-WDG07LE5,WH-WDG09LE5,WH-UDZ03KE5,WH-UDZ05KE5,WH-UDZ07KE5,WH-UDZ09KE5,U-25PZ3E5,WH-MXC09H3E8,U-71PZH2E8,CU-CZ25ZKE,CU-CZ35ZKE,U-6LZ2E8,U-125PZH4E8,CU-HZ25ZKE,CU-HZ35ZKE,U-5LZ2E8,U-71PZH4E8,U-100PZH4E8,U-140PZH4E8,U-71PZH4E5,CU-HZ25ZKE-5,CU-2Z50ABEC,CU-3Z75ABEC,WH-WXG20ME8,WH-WXG25ME8,WH-WXG30ME8,WH-WXG09ME8,WH-WXG12ME8,WH-WXG16ME8,WH-UXZ09KE8,WH-UXZ12KE8,WH-UXZ16KE8,U-200PZH4E8,U-250PZH4E8,CU-2Z35CBE,CU-2Z41CBE,CU-2Z50CBE,CU-3Z52CBE,CU-3Z68CBE,CU-4Z68CBE,CU-4Z80CBE,CU-5Z90CBE,WH-MDC05J3E5-1,WH-MDC07J3E5-1,WH-MDC09J3E5-1,CU-Z35CFEA-1,CU-Z25CFEA-1".split(',');
+var MODELS_INDE="CS-CZ25WKE,CS-CZ35WKE,CS-NZ25VKE,CS-NZ35VKE,CS-NZ50VKE,CS-HZ25WKE,CS-HZ35WKE,CS-HZ25WKE-5,CS-HZ35WKE-5,CS-HZ25XKE,CS-HZ35XKE,CS-HZ25XKE-5,CS-HZ35XKE-5,CS-Z25UFEAW-1,CS-Z35UFEAW-1,CS-VZ9SKE,CS-VZ12SKE,CS-MTZ16WKE,CS-TZ20WKEW,CS-TZ25WKEW,CS-TZ35WKEW,CS-TZ42WKEW,CS-TZ50WKEW,CS-TZ60WKEW,CS-TZ71WKEW,CS-MZ20UFEA,CS-Z25UFEAW,CS-Z35UFEAW,CS-Z50UFEAW,S-M20PY3E,S-25PY3E,S-36PY3E,S-50PY3E,S-60PY3E,CS-MZ20UD3EA,CS-Z25UD3EAW,CS-Z35UD3EAW,CS-Z50UD3EAW,CS-Z60UD3EAW,S-6010PK3E,S-6071PU3E,S-1014PU3E,S-6071PT3E,S-1014PT3E,S-3650PF3E,S-6071PF3E,S-1014PF3E,S-200PE3E5B,S-250PE3E5B,CS-Z25TKEA,CS-Z35TKEA,CS-Z42TKEA,CS-Z50TKEA,CS-Z71TKEA,S-3650PK3E,S-36PY2E5B,S-50PY2E5B,S-22ML1E5,S-28ML1E5,S-36ML1E5,S-45ML1E5,S-73ML1E5,S-28MD1E5,S-36MD1E5,S-45MD1E5,S-56MD1E5,S-73MD1E5,S-15MF2E5A,S-22MF2E5A,S-28MF2E5A,S-36MF2E5A,S-45MF2E5A,S-56MF2E5A,S-60MF2E5A,S-73MF2E5A,S-90MF2E5A,S-106MF2E5A,S-140MF2E5A,S-160MF2E5A,S-36MT2E5A,S-45MT2E5A,S-56MT2E5A,S-73MT2E5A,S-106MT2E5A,S-140MT2E5A,S-22MP1E5,S-28MP1E5,S-36MP1E5,S-45MP1E5,S-56MP1E5,S-71MP1E5,S-22MR1E5,S-28MR1E5,S-36MR1E5,S-45MR1E5,S-56MR1E5,S-71MR1E5,S-22MY2E5B,S-50PT2E5B,CS-Z50UB4EAW,CS-Z35UB4EAW,CS-Z25UB4EAW,S-3650PU3E,CS-LZ25TKE,CS-LZ35TKE,CS-HZ25UKE,CS-NZ25YKE,CS-NZ35YKE,CS-Z35YKEA,CS-HZ35XKE-H,CS-HZ25XKE-H,CS-NZ50YKE,CS-Z25YKEA,CS-Z42YKEA,CS-Z50YKEA,CS-Z71YKEA,CS-NZ35TKE,CS-NZ25TKE,CS-HZ9RKE-1,CS-HZ25TKE,CS-CZ9SKE,CS-AZ9RKE-1,CS-QZ25VKE,CS-TZ25TKEW,CS-CZ25TKE,CS-QZ9SKE,CS-CZ12SKE,CS-MTZ16ZKE,CS-TZ20ZKEW,CS-TZ25ZKEW,CS-TZ35ZKEW,CS-TZ42ZKEW,CS-MZ16ZKE,CS-CZ25ZKE,CS-CZ35ZKE,S-3650PT3E,S-15MK2E5B,S-28MY2E5B,S-28MK2E5B,CS-HZ25ZKE,CS-HZ35ZKE,CS-HZ25ZKE-H,CS-HZ35ZKE-H,CS-HZ25ZKE-5,CS-NZ25YKE-1,CS-NZ35YKE-1,CS-TZ50ZKEW,CS-MZ16CKE,CS-Z20CKEW,CS-Z25CKEW,CS-Z35CKEW,CS-Z42CKEW,CS-Z50CKEW,CS-MTZ16CKE,CS-TZ20CKEW,CS-TZ25CKEW,CS-TZ35CKEW,CS-TZ42CKEW,CS-TZ50CKEW,CS-MZ20CFEA,CS-Z25CFEAW,CS-Z35CFEAW,CS-Z50CFEAW,CS-MZ20CD3EA,CS-Z25CD3EAW,CS-Z35CD3EAW,CS-Z50CD3EAW,S-5010PK4E,CS-Z35CFEAW-1,CS-Z25CFEAW-1,S-2545PK4E,CS-NZ50YKE-1".split(',');</script>
 <script>
 (function(){
 'use strict';
 var PANASONIC_URL='https://www.panasonicproclub.com/DK_da/service/commissioning-submit/new/';
 var SKEY='saelIndscanSettings', DKEY='saelIndscanData';
-var DEFAULTS={apikey:'',model:'gemini-flash-latest',grossist:'',installeret_af:'Salomonsen Electric',indkobt_af:''};
+var DEFAULTS={apikey:'',model:'gemini-flash-latest',ekkey:'',eksite:''};
+var FIRMA='Salomonsen Electric', GROSSIST='Panasonic forhandler';
+var EK_BASE='https://externalaccessapi.e-komplet.dk/api/v4/';
 var FIELDS=['fornavn','efternavn','telefon','email','adresse','postnr_by','dato'];
 var $=function(id){return document.getElementById(id)};
 var photo=null, photoDate=null;
@@ -211,18 +213,29 @@ function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(
 var settings=Object.assign({},DEFAULTS,store(SKEY)||{});
 
 // ---------- settings ----------
-['apikey','model','grossist','installeret_af','indkobt_af'].forEach(function(k){
+['apikey','model','ekkey','eksite'].forEach(function(k){
   var el=$(k); el.value=settings[k]||'';
-  el.addEventListener('change',function(){settings[k]=el.value.trim();store(SKEY,settings)});
+  el.addEventListener('change',function(){settings[k]=el.value.trim();if(k==='eksite')settings[k]=settings[k].replace(/^https?:\/\//,'').replace(/[-.]?e-?komplet\.dk.*$/i,'').replace(/\/.*$/,'');el.value=settings[k];store(SKEY,settings)});
 });
-if(!settings.apikey||!settings.grossist) $('setup').open=true;
+if(!settings.apikey) $('setup').open=true;
+
+// ---------- model lists ----------
+function NM(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function fixModel(v,kind){
+  var list=kind==='ude'?MODELS_UDE:MODELS_INDE, n=NM(v);if(!n)return{model:v,ok:false};
+  for(var i=0;i<list.length;i++)if(NM(list[i])===n)return{model:list[i],ok:true};
+  var best=null,bd=9;list.forEach(function(m){var mm=NM(m);if(Math.abs(mm.length-n.length)>2)return;var d=lev(n,mm);if(d<bd){bd=d;best=m}});
+  if(best&&bd<=2)return{model:best,ok:true,fixed:true};
+  return{model:v,ok:false};
+}
+(function(){['ude','inde'].forEach(function(k){var dl=document.createElement('datalist');dl.id='dl-'+k;(k==='ude'?MODELS_UDE:MODELS_INDE).forEach(function(m){var o=document.createElement('option');o.value=m;dl.appendChild(o)});document.body.appendChild(dl)})})();
 
 // ---------- units ----------
 function unitEl(kind,u){
   var d=document.createElement('div');d.className='unit';
   var n=$(kind).children.length+1;
   d.innerHTML='<span class="t">'+(kind==='ude'?'Udendørs':'Indendørs')+' '+n+'</span><button class="x" title="Fjern">×</button>'+
-   '<div class="row"><div><label class="f">Model</label><input type="text" class="m" autocapitalize="characters" autocomplete="off" placeholder="'+(kind==='ude'?'CU-…':'CS-…')+'"></div>'+
+   '<div class="row"><div><label class="f">Model</label><input type="text" class="m" list="dl-'+kind+'" autocapitalize="characters" autocomplete="off" placeholder="'+(kind==='ude'?'CU-…':'CS-…')+'"></div>'+
    '<div><label class="f">Serienummer</label><input type="text" class="s" autocapitalize="characters" autocomplete="off"></div></div>';
   d.querySelector('.m').value=(u&&u.model)||'';d.querySelector('.s').value=(u&&u.serie)||'';
   d.querySelector('.x').onclick=function(){d.remove();renumber(kind);saveData()};
@@ -245,8 +258,16 @@ function validate(){
   FIELDS.forEach(function(k){$(k).classList.toggle('warn',!$(k).value.trim())});
   var dv=$('dato').value.trim();
   if(dv&&!/^\d{2}-\d{2}-\d{4}$/.test(dv))$('dato').classList.add('warn');
-  document.querySelectorAll('.unit input').forEach(function(i){i.classList.toggle('warn',!i.value.trim())});
+  document.querySelectorAll('.unit input').forEach(function(i){
+    var bad=!i.value.trim();
+    if(!bad&&i.classList.contains('m')){var k=i.closest('#ude')?'ude':'inde';var list=k==='ude'?MODELS_UDE:MODELS_INDE;bad=!list.some(function(m){return NM(m)===NM(i.value)})}
+    i.classList.toggle('warn',bad);
+  });
 }
+document.addEventListener('change',function(e){
+  var i=e.target;if(!i.classList||!i.classList.contains('m'))return;
+  var r=fixModel(i.value,i.closest('#ude')?'ude':'inde');if(r.ok&&r.model!==i.value){i.value=r.model;saveData()}
+});
 
 // ---------- status ----------
 function status(html,type){var s=$('status');s.className=type||'info';s.innerHTML=html;s.classList.remove('hidden')}
@@ -341,7 +362,9 @@ function analyse(){
   }).then(function(res){
     var d=res[0],codes=res[1];
     var fixes=crossCheck(d.udedele,codes)+crossCheck(d.indedele,codes);
-    var ordre=$('ordre').value;
+    var unknown=[];
+    [['ude',d.udedele],['inde',d.indedele]].forEach(function(p){(p[1]||[]).forEach(function(u){var r=fixModel(u.model,p[0]);if(r.ok)u.model=r.model;else if(u.model)unknown.push(u.model)})});
+    var ordre=$('ordre').value.trim();
     d.dato=normDate(d.dato);var datoFraFoto=!d.dato;if(!d.dato)d.dato=fmtDate(photoDate);
     d.telefon=String(d.telefon||'').replace(/[^\d+]/g,'');
     d.email=String(d.email||'').replace(/\s/g,'').toLowerCase();
@@ -350,8 +373,10 @@ function analyse(){
     var missing=FIELDS.filter(function(k){return!d[k]});
     if(!d.udedele||!d.udedele.length)missing.push('udendørsenhed');if(!d.indedele||!d.indedele.length)missing.push('indendørsenhed');
     var extra=codes.length?' Serienumrene er tjekket mod stregkoderne'+(fixes?' ('+fixes+' rettet)':'')+'.':'';
+    if(unknown.length)extra+=' ⚠️ Modellen <b>'+unknown.join(', ')+'</b> findes ikke i Panasonics liste. Ret den (der kommer forslag, når du skriver).';
     if(missing.length)status('Læst, men disse felter mangler: <b>'+missing.join(', ')+'</b>. Udfyld dem nedenfor.'+extra,'warn');
-    else status('✅ Læst. Tjek felterne, især e-mail og serienumre.'+extra,'ok');
+    else status('✅ Læst. Tjek felterne, især e-mail og serienumre.'+extra,unknown.length?'warn':'ok');
+    ekAuto();
     $('retry').classList.remove('hidden');
     $('fields').scrollIntoView({behavior:'smooth',block:'start'});
   }).catch(function(err){
@@ -375,11 +400,12 @@ $('send').onclick=function(){
   var d=getData();var miss=FIELDS.filter(function(k){return!d[k]});
   if(!d.udedele.length)miss.push('udendørsenhed');if(!d.indedele.length)miss.push('indendørsenhed');
   if(d.dato&&!/^\d{2}-\d{2}-\d{4}$/.test(d.dato))miss.push('dato i formatet dd-mm-åååå');
-  if(!settings.grossist)miss.push('grossist (Indstillinger)');
+  d.udedele.concat(d.indedele).forEach(function(u){if(u.model&&!MODELS_UDE.concat(MODELS_INDE).some(function(m){return NM(m)===NM(u.model)}))miss.push('model '+u.model+' findes ikke hos Panasonic')});
   if(miss.length&&!confirm('Disse felter mangler:\n• '+miss.join('\n• ')+'\n\nSend alligevel? (De skal så udfyldes manuelt hos Panasonic)'))return;
   var payload={app:'sael-indscanner',v:1,produktvalg:'1',fornavn:d.fornavn,efternavn:d.efternavn,telefon:d.telefon,email:d.email,
-    reference:d.ordre,adresse:d.adresse,postnr_by:d.postnr_by,dato:d.dato,grossist:settings.grossist,
-    installeret_af:settings.installeret_af,indkobt_af:settings.indkobt_af,udedele:d.udedele,indedele:d.indedele};
+    reference:d.ordre,adresse:d.adresse,postnr_by:d.postnr_by,dato:d.dato,grossist:GROSSIST,
+    installeret_af:FIRMA,indkobt_af:FIRMA,udedele:d.udedele,indedele:d.indedele};
+  if(photo&&ekReady()&&ekDone!==ekKey())ekUpload();
   var txt=JSON.stringify(payload);
   var okMsg='📋 Oplysningerne er kopieret. På Panasonic-siden: tryk på bogmærket <b>Panasonic udfyld</b> (to gange, hvis siden skifter).';
   var copied=false;try{copied=legacyCopy(txt)}catch(e){}
@@ -389,15 +415,73 @@ $('send').onclick=function(){
   }).catch(function(){status('Kunne ikke kopiere automatisk. Prøv igen.','err')});
 };
 
+// ---------- E-komplet ----------
+var ekDone=null, ekBusy=false;
+function photoName(){
+  var ordre=($('ordre').value.trim()||'uden-ordrenr').replace(/[^\w\-]+/g,'_');var dt=photoDate||new Date();
+  return 'Ordre_'+ordre+'_Panasonic_opstart_'+dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'.jpg';
+}
+function ekReady(){return !!(settings.ekkey&&settings.eksite)}
+function ekKey(){return (photo&&(photo.name+photo.size+photo.lastModified))+'|'+$('ordre').value.trim()}
+function ekStatus(html,type){var s=$('ekstatus');s.className='';s.style.background={ok:'#e6f4e7',err:'#fdecea',warn:'#fff3e0',info:'#e3f0fb'}[type||'info'];s.style.color={ok:'#1b5e20',err:'#8e1c1c',warn:'#8a4500',info:'#0b4a80'}[type||'info'];s.innerHTML=html}
+function pick(o,k){if(!o)return undefined;if(k in o)return o[k];var K=Object.keys(o).find(function(x){return x.toLowerCase()===k.toLowerCase()});return K?o[K]:undefined}
+function ekFetch(path,opt){
+  opt=opt||{};opt.headers=Object.assign({'apikey':settings.ekkey,'sitename':settings.eksite,'Accept':'application/json'},opt.headers||{});
+  return fetch(EK_BASE+path,opt).then(function(r){return r.text().then(function(t){var j=null;try{j=JSON.parse(t)}catch(e){}
+    if(!r.ok||(j&&pick(j,'hasErrors'))){var m=(j&&(pick(j,'errorMessage')||pick(j,'title')))||('HTTP '+r.status);if(r.status===401)m='API-nøglen eller sitename er forkert';throw new Error(m)}
+    return j})});
+}
+function ekFindProject(ref){
+  return ekFetch('projects/ref/'+encodeURIComponent(ref)).then(function(j){
+    var list=pick(j,'data')||[];if(!Array.isArray(list))list=[list];
+    if(!list.length)throw new Error('Der findes ingen sag med nummer '+ref+' i E-komplet');
+    return list;
+  });
+}
+function shrinkForUpload(file){
+  if(file.size<=3.5e6)return Promise.resolve({blob:file,type:file.type||'image/jpeg'});
+  return loadBitmap(file).then(function(bmp){var b64=toJpegBase64(bmp,2600);var bin=atob(b64),a=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return{blob:new Blob([a],{type:'image/jpeg'}),type:'image/jpeg'}});
+}
+function blobToB64(blob){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(String(fr.result).split(',')[1])};fr.onerror=rej;fr.readAsDataURL(blob)})}
+function ekUpload(){
+  if(ekBusy)return;
+  if(!photo){ekStatus('Tag først et billede.','warn');return}
+  if(!ekReady()){ekStatus('E-komplet er ikke sat op endnu. Udfyld API-nøgle og sitename under ⚙️ Indstillinger.','warn');$('setup').open=true;return}
+  var ref=$('ordre').value.trim();if(!ref){ekStatus('Skriv sagsnummeret øverst, så uploades billedet.','warn');$('ordre').focus();return}
+  var key=ekKey();ekBusy=true;$('ekbtn').disabled=true;
+  ekStatus('<span class="spin" style="border-color:rgba(11,74,128,.25);border-top-color:#0b4a80;vertical-align:-3px;margin-right:6px"></span>Uploader billedet til sag '+ref+' i E-komplet…','info');
+  var proj;
+  ekFindProject(ref).then(function(list){
+    proj=list[0];
+    return shrinkForUpload(photo);
+  }).then(function(f){return blobToB64(f.blob).then(function(b64){return{b64:b64,type:f.type}})}).then(function(f){
+    var ext=f.type==='image/png'?'.png':(/hei[cf]/.test(f.type)?'.heic':'.jpg');var body=[{fileName:photoName().replace(/\.jpg$/,ext),mimeType:f.type,description:'Panasonic opstartsprotokol / garantiregistrering',fileData:f.b64}];
+    return ekFetch('projects/upload?projectId='+encodeURIComponent(pick(proj,'projectID')),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  }).then(function(){
+    ekDone=key;var nm=pick(proj,'projectName')||'';var cu=pick(proj,'customerName')||'';
+    ekStatus('✅ Billedet er gemt i E-komplet på sag <b>'+ref+'</b>'+(nm||cu?' ('+[nm,cu].filter(Boolean).join(' · ')+')':'')+'.','ok');
+  }).catch(function(e){
+    ekStatus('E-komplet: '+(e&&e.message||e)+'. Tryk "Upload billede til E-komplet" for at prøve igen.','err');
+  }).then(function(){ekBusy=false;$('ekbtn').disabled=false});
+}
+function ekAuto(){if(photo&&ekReady()&&$('ordre').value.trim()&&ekDone!==ekKey())ekUpload()}
+$('ekbtn').onclick=ekUpload;
+$('ordre').addEventListener('change',ekAuto);
+$('ektest').onclick=function(){
+  var b=$('ektest');if(!ekReady()){b.textContent='Udfyld API-nøgle og sitename først';return}
+  b.textContent='Tester…';
+  ekFetch('projects/ref/0').then(function(){b.textContent='✓ Forbindelsen virker'}).catch(function(e){var m=String(e&&e.message||e);
+    if(/sitename|apikey|api-n|nøgle|401|403|Failed to fetch/i.test(m))b.textContent='✗ '+m;else b.textContent='✓ Forbindelsen virker'});
+  setTimeout(function(){b.textContent='Test forbindelsen til E-komplet'},8000);
+};
+
 // ---------- save photo ----------
 $('save').onclick=function(){
   if(!photo){status('Der er intet billede at gemme endnu.','warn');return}
-  var ordre=($('ordre').value.trim()||'uden-ordrenr').replace(/[^\w\-]+/g,'_');
-  var dt=photoDate||new Date();
-  var name='Ordre_'+ordre+'_Panasonic_opstart_'+dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'.jpg';
+  var name=photoName();
   var file=new File([photo],name,{type:photo.type||'image/jpeg'});
   if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-    navigator.share({files:[file],title:name,text:'Panasonic opstartsprotokol – ordre '+ordre}).catch(function(){});
+    navigator.share({files:[file],title:name,text:'Panasonic opstartsprotokol – ordre '+$('ordre').value.trim()}).catch(function(){});
   }else{
     var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
@@ -407,7 +491,7 @@ $('save').onclick=function(){
 $('reset').onclick=function(){
   if(!confirm('Start en ny scanning? De nuværende felter ryddes.'))return;
   photo=null;photoDate=null;$('preview').classList.add('hidden');$('status').classList.add('hidden');$('retry').classList.add('hidden');
-  $('datohint').textContent='';setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
+  $('datohint').textContent='';$('ekstatus').classList.add('hidden');ekDone=null;setData({});store(DKEY,{});window.scrollTo({top:0,behavior:'smooth'});
 };
 
 // ---------- bookmarklet ----------
